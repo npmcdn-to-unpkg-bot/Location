@@ -8,7 +8,7 @@
       <serviceBehaviors>
         <behavior name="ServiceBehavior">
           <!--To avoid disclosing metadata information, set the values below to false before deployment-->
-          <serviceMetadata httpGetEnabled="true" httpsGetEnabled="false"/>
+          <serviceMetadata httpGetEnabled="true" httpsGetEnabled="true"/>
           <!--To receive exception details in faults for debugging purposes, set the value below to true.  Set to false before deployment to avoid disclosing exception information-->
           <serviceDebug includeExceptionDetailInFaults="true"/>
         </behavior>
@@ -20,8 +20,8 @@
       </endpointBehaviors>
     </behaviors>
     <services>
-      <service behaviorConfiguration="ServiceBehavior" name="BleLog.BleLog">
-        <endpoint address="" binding="webHttpBinding" contract="BleLog.IBleLog" behaviorConfiguration="EndpBehavior"/>
+      <service behaviorConfiguration="ServiceBehavior" name="WebMap.WebMap">
+        <endpoint address="" binding="webHttpBinding" contract="WebMap.IWebMap" behaviorConfiguration="EndpBehavior"/>
         <endpoint contract="IMetadataExchange" binding="mexHttpBinding" address="mex"/>
       </service>
     </services>
@@ -46,16 +46,15 @@
     <modules runAllManagedModulesForAllRequests="true"/>
     <!--To browse web app root directory during debugging, set the value below to true.
         Set to false before deployment to avoid disclosing web app folder information.-->
-    <directoryBrowse enabled="false"/>
+    <directoryBrowse enabled="true"/>
   </system.webServer>
   <connectionStrings>
     <!--<add name="TimeTrial" connectionString="server=localhost\System5;database=TimeTrial;Trusted_Connection=Yes"/>-->
-    <add name="WebMap" connectionString="server=www.timetrials.org.uk;database=chrisfgma5886com5778_timetrial;User ID=quilkin;Password=Iw3692eh"/>
   </connectionStrings>
   <system.web>
     <customErrors mode="Off"/>
     <compilation debug="true" targetFramework="4.0"/>
-    <httpRuntime targetFramework="4.0"/>
+    <httpRuntime/>
     <pages controlRenderingCompatibilityVersion="4.0" clientIDMode="AutoID"/>
   </system.web>
 </configuration>

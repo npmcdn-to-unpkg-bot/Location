@@ -4,4 +4,15 @@
 	<application android:label="Location.Droid" android:icon="@drawable/icon"></application>
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<service
+  android:name=".LocationService"
+  android:icon="@drawable/icon"
+  android:label="@string/service_name"
+  >
+     <intent-filter>
+        <action android:name="android.service.LocationService" />
+        <category android:name="android.intent.category.DEFAULT" />
+   </intent-filter>
+
+</service> 
 </manifest>

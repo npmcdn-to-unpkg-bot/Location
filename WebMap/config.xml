@@ -1,47 +1,10 @@
-<?xml version='1.0' encoding='utf-8'?>
-<widget id="com.quilkin.timetrial" version="0.9.3" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>TimeTrial</name>
-    <description>
-      App for organising and running a cycling time-trial event, including timing purposes during the event
-    </description>
-    <author email="admin@timetrials.org.uk" href="http://timetrials.org.uk">
-        Quilkin
-    </author>
-    <content src="index.html" />
-    <access origin="*" />
-  <feature name="File">
-    <param name="onload" value="true" />
-    <param name="android-package" value="org.apache.cordova.file.FileUtils" />
-  </feature>
-  <feature name="Media">
-    <param name="onload" value="true" />
-    <param name="android-package" value="org.apache.cordova.media.AudioHandler" />
-  </feature>
-  <feature name="Power">
-    <param name="onload" value="true" />
-    <param name="android-package" value="org.chromium.ChromePower" />
-  </feature>
-  <feature name="Device">
-    <param name="onload" value="true" />
-    <param name="android-package" value="org.apache.cordova.device" />
-  </feature>
-  <icon src="www/res/icons/icon.png" />
-  <icon src="www/res/icons/android/icon-36-ldpi.png" platform="android" density="ldpi" />
-  <icon src="www/res/icons/android/icon-48-mdpi.png" platform="android" density="mdpi" />
-  <icon src="www/res/icons/android/icon-72-hdpi.png" platform="android" density="hdpi" />
-  <icon src="www/res/icons/android/icon-96-xhdpi.png" platform="android" density="xhdpi" />
-  <!--<platform name="android">
-    <splash src="www/res/splash/default@2x~iphone.png" density="land-hdpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="land-ldpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="land-mdpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="land-xhdpi"/>
-
-    <splash src="www/res/splash/default@2x~iphone.png" density="port-hdpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="port-ldpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="port-mdpi"/>
-    <splash src="www/res/splash/default@2x~iphone.png" density="port-xhdpi"/>
-  </platform>-->
-  <preference name="SplashScreen" value="splash" />
-  <preference name="SplashScreenDelay" value="3000" />
-  <access origin="mailto:*" launch-external="yes" />
+﻿<?xml version="1.0" encoding="utf-8"?>
+<widget xmlns:gap = "http://phonegap.com/ns/1.0" xmlns:android   = "http://schemas.android.com/apk/res/android" xmlns:id="com.quilkin.webmap" version="0.0.9.1" xmlns="http://www.w3.org/ns/widgets">
+  <name>WebMap</name>
+  <description></description>
+  <author href="http://www.quilkin.co.uk" email="admin@quilkin.co.uk">Quilkin</author>
+  <content src="index.html" />
+  <access origin="*" />
+  <icon src="icon.png" />
+  <gap:splash src="splash.png" />
 </widget>

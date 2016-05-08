@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace MapServer
+namespace WebMap
 {
     [DataContract]
     public class Login
@@ -237,7 +237,7 @@ namespace MapServer
             //if (this.Result != null)
             //    this.Result = this.Result.Substring(0, 125);
             string query = string.Format("insert into log (time,ip,func,args,result,error) values ('{0}','{1}','{2}','{3}','{4}','{5}')",
-                MapServer.TimeString(DateTime.Now), this.IP, this.Function, this.Args,this.Result,this.Error);
+                WebMap.TimeString(DateTime.Now), this.IP, this.Function, this.Args,this.Result,this.Error);
 
             using (System.Data.SqlClient.SqlCommand command = new SqlCommand(query, conn))
             {

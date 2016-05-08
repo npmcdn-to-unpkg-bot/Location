@@ -2,4 +2,5 @@
 <resources>
 	<string name="hello">Hello World, Click Me!</string>
 	<string name="app_name">Location.Droidd</string>
+  <string name="service_name">LocationService</string>
 </resources>

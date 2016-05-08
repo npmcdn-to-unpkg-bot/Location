@@ -119,6 +119,9 @@ namespace Location.Droid
 			// aapt resource value: 0x7f040000
 			public const int hello = 2130968576;
 			
+			// aapt resource value: 0x7f040002
+			public const int service_name = 2130968578;
+			
 			static String()
 			{
 				global::Android.Runtime.ResourceIdManager.UpdateIdValues();

@@ -7,11 +7,11 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Data;
 
-namespace MapServer
+namespace WebMap
 {
 
      [ServiceContract]
-    public interface IMapServer
+    public interface IWebMap
     {
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/GetLogdata", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]

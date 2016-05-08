@@ -67,7 +67,7 @@ namespace Location.Droid.Services
 			Log.Debug (logTag, string.Format ("You are about to get location updates via {0}", locationProvider));
 
 			// Get an initial fix on location
-			LocMgr.RequestLocationUpdates(locationProvider, 2000, 0, this);
+			LocMgr.RequestLocationUpdates(locationProvider, 60000, 0, this);
 
 			Log.Debug (logTag, "Now sending location updates");
 		}
@@ -99,9 +99,12 @@ namespace Location.Droid.Services
             {
                 using (WebClient client = new WebClient())
                 {
-                    string json = string.Format("{{\"latitude\":{0},\"longitude\":{1}}}", location.Latitude, location.Longitude);
+                    
+                    string json = string.Format("{{\"latitude\":{0},\"longitude\":{1}}}",
+                        location.Latitude, location.Longitude);
                     client.Headers[HttpRequestHeader.ContentType] = "application/json";
                     client.UploadString("http://www.quilkin.co.uk/Service1.svc/SaveLocation", json);
+                    //client.UploadString("http://localhost:60080/Service1.svc/SaveLocation", json);
                     Log.Debug(logTag, "Posted to Web at " + DateTime.Now.ToShortTimeString());
                 }
             }
