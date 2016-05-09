@@ -100,8 +100,10 @@ namespace Location.Droid.Services
                 using (WebClient client = new WebClient())
                 {
                     
+                    //string json = string.Format("{{\"latitude\":{0},\"longitude\":{1},\"recorded_at\":'{2}'}}",
+                    //    location.Latitude, location.Longitude, location.Time.ToString());
                     string json = string.Format("{{\"latitude\":{0},\"longitude\":{1}}}",
-                        location.Latitude, location.Longitude);
+                         location.Latitude, location.Longitude);
                     client.Headers[HttpRequestHeader.ContentType] = "application/json";
                     client.UploadString("http://www.quilkin.co.uk/Service1.svc/SaveLocation", json);
                     //client.UploadString("http://localhost:60080/Service1.svc/SaveLocation", json);

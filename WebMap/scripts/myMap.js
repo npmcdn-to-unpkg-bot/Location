@@ -29,7 +29,7 @@ var MapData = (function ($) {
     var MapData = {};
 
     function urlBase() {
-        //return "http://localhost:60080/Service1.svc/";
+       // return "http://localhost:60080/Service1.svc/";
        return "http://www.quilkin.co.uk/Service1.svc/";
 
     }

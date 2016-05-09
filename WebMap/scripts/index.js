@@ -22,15 +22,15 @@
 
         // just testing server connections
 
-        var loc = { latitude: 47.640068, longitude: -122.129858 };
-        MapData.json('SaveLocation', "POST", loc, function () { }, true, null);
-        MapData.json('GetLocations', "POST", null, function (locs) {
-            var locations = [];
-            $.each(locs, function (index, loc) {
-                if (loc.latitude > 0)
-                    locations += loc;
-            })
-        }, true, null);
+        //var loc = { latitude: 47.640068, longitude: -122.129858 };
+        //MapData.json('SaveLocation', "POST", loc, function () { }, true, null);
+        //MapData.json('GetLocations', "POST", null, function (locs) {
+        //    var locations = [];
+        //    $.each(locs, function (index, loc) {
+        //        if (loc.latitude > 0)
+        //            locations += loc;
+        //    })
+        //}, true, null);
 
         //myMap.create();
     });

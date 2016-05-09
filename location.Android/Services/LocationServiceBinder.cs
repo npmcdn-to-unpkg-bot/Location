@@ -1,10 +1,9 @@
-using System;
 using Android.OS;
 
 namespace Location.Droid.Services
 {
-	//This is our Binder subclass, the LocationServiceBinder
-	public class LocationServiceBinder : Binder
+    //This is our Binder subclass, the LocationServiceBinder
+    public class LocationServiceBinder : Binder
 	{
 		public LocationService Service
 		{

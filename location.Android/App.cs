@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Android.Content;
@@ -12,7 +11,7 @@ using Location.Droid.Services;
 /// </summary>
 namespace Location.Droid
 {
-	public class App
+    public class App
 	{
 		// events
 		public event EventHandler<ServiceConnectedEventArgs> LocationServiceConnected = delegate {};
