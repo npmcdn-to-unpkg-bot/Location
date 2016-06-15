@@ -26,11 +26,13 @@ namespace Location.Droid.Services
 
 		readonly string logTag = "LocationService";
 		IBinder binder;
+        Android.Media.MediaPlayer _player;
 
 		public override void OnCreate ()
 		{
 			base.OnCreate ();
 			Log.Debug (logTag, "OnCreate called in the Location Service");
+            _player = Android.Media.MediaPlayer.Create(this, Resource.Raw.beep_mp3);
 		}
 
 		// This gets called when StartService is called in our App class
@@ -88,12 +90,13 @@ namespace Location.Droid.Services
 
 			// This should be updating every time we request new location updates
 			// both when teh app is in the background, and in the foreground
-			Log.Debug (logTag, String.Format ("Latitude is {0}", location.Latitude));
-			Log.Debug (logTag, String.Format ("Longitude is {0}", location.Longitude));
-			Log.Debug (logTag, String.Format ("Altitude is {0}", location.Altitude));
-			Log.Debug (logTag, String.Format ("Speed is {0}", location.Speed));
-			Log.Debug (logTag, String.Format ("Accuracy is {0}", location.Accuracy));
-			Log.Debug (logTag, String.Format ("Bearing is {0}", location.Bearing));
+			//Log.Debug (logTag, String.Format ("Latitude is {0}", location.Latitude));
+			//Log.Debug (logTag, String.Format ("Longitude is {0}", location.Longitude));
+			//Log.Debug (logTag, String.Format ("Altitude is {0}", location.Altitude));
+			//Log.Debug (logTag, String.Format ("Speed is {0}", location.Speed));
+			//Log.Debug (logTag, String.Format ("Accuracy is {0}", location.Accuracy));
+			//Log.Debug (logTag, String.Format ("Bearing is {0}", location.Bearing));
+            _player.Start();
 
             try
             {

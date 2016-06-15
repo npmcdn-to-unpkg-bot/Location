@@ -65,11 +65,18 @@
     <Content Include="config.xml">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="css\easyButton.css" />
     <Content Include="css\index.css" />
     <Content Include="css\leaflet.css" />
     <Content Include="css\my.css" />
+    <Content Include="images\crosshair.png" />
+    <Content Include="scripts\images\layers-2x.png" />
+    <Content Include="scripts\images\layers.png" />
+    <Content Include="scripts\images\LockScreenLogo.scale-200.png" />
+    <Content Include="scripts\images\marker-icon-2x.png" />
+    <Content Include="scripts\images\marker-icon.png" />
+    <Content Include="scripts\images\marker-shadow.png" />
     <Content Include="images\sort_asc.png" />
-    <Content Include="images\sort_asc_disabled.png" />
     <Content Include="images\sort_both.png" />
     <Content Include="images\sort_desc.png" />
     <Content Include="images\sort_desc_disabled.png" />
@@ -163,6 +170,7 @@
     <Content Include="res\images\yearForward_over.gif" />
     <Content Include="res\splash\default%402x~iphone.png" />
     <Content Include="res\splash\default~iphone.png" />
+    <Content Include="scripts\easyButton.js" />
     <Content Include="scripts\index.js" />
     <Content Include="scripts\jquery-1.11.3.min.js" />
     <Content Include="scripts\myMap.js" />
