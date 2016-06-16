@@ -173,6 +173,7 @@
     <Content Include="scripts\easyButton.js" />
     <Content Include="scripts\index.js" />
     <Content Include="scripts\jquery-1.11.3.min.js" />
+    <Content Include="scripts\lrm-mapzen.js" />
     <Content Include="scripts\myMap.js" />
     <Content Include="scripts\platformOverrides.js" />
     <Content Include="Service1.svc" />

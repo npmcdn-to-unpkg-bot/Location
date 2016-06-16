@@ -63,6 +63,22 @@ var MapData = (function ($) {
             });
         }
     };
+
+    MapData.jsonMapzen = function (data, successfunc) {
+        var dataJson = JSON.stringify(data);
+        var url = 'https://valhalla.mapzen.com/route?json=' +  dataJson + '&api_key=valhalla-3F5smze' ;
+        
+        //var dataJson = "{\"locations\":[{\"lat\":42.358528,\"lon\":-83.271400},{\"lat\":42.996613,\"lon\":-78.749855}]}"
+            $.ajax({
+                url: url,
+                type: "GET",
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                success: successfunc,
+                error: webRequestFailed
+            });
+
+    };
     return MapData;
 
 
@@ -81,7 +97,8 @@ var myMap = (function ($) {
         locations = [],
             route,
             iconCentre1,
-                iconCentre2;
+                iconCentre2,
+                points=[];
 
     // Create additional Control placeholders
     function addControlPlaceholders(map) {
@@ -128,6 +145,8 @@ var myMap = (function ($) {
         iconCentre1.addTo(map);
 
         L.easyButton('<span >&rarr;</span>', createRoute).addTo(map);
+        L.easyButton('<span >&check;</span>', addPoint).addTo(map);
+        L.easyButton('<span >&cross;</span>', deletePoint).addTo(map);
 
         var index, count = locs.length;
         var now = new Date();
@@ -163,40 +182,44 @@ var myMap = (function ($) {
             }
         }
 
-        
-        //map.on('click', function (e) {
-        //    var centre = map.getCenter();
-        //    if (route != undefined)
-        //        route.removeFrom(map);
-        //    route = L.Routing.control({
-        //        waypoints: [
-        //          L.latLng(location.latitude, location.longitude),
-        //          L.latLng(centre.lat, centre.lng)
-        //        ],
-        //        router: L.Routing.mapzen('valhalla-3F5smze',
-        //            {
-        //                costing: 'bicycle',
-        //                costing_options: { bicycle: { bicycle_type: 'Mountain' } }
-        //            }
-        //            ),
-        //        formatter: new L.Routing.mapzenFormatter(),
-        //        summaryTemplate: '<div class="start">{name}</div><div class="info {costing}">{distance}, {time}</div>',
-        //        routeWhileDragging: false
-        //    }).addTo(map);
-        //});
+
 
     }, true, null);
 
+    function addPoint() {
+        var centre = map.getCenter();
+
+        if (route == undefined) {
+            points.push(L.latLng(location.latitude, location.longitude));
+            points.push(L.latLng(centre.lat, centre.lng));
+            createRoute();
+            return;
+        }
+        points.push(L.latLng(centre.lat, centre.lng));
+        createRoute();
+        
+    }
+    function deletePoint()
+    {
+        if (points.length < 2) {
+            alert("No waypoints to delete!")
+            return;
+        }
+        points.pop();
+        createRoute();
+    }
     function createRoute()
     {
-        var centre = map.getCenter();
+        if (points.length < 2)
+        {
+            alert("No waypoints added!")
+            return;
+        }
+        //var centre = map.getCenter();
         if (route != undefined)
             route.removeFrom(map);
         route = L.Routing.control({
-            waypoints: [
-              L.latLng(location.latitude, location.longitude),
-              L.latLng(centre.lat, centre.lng)
-            ],
+            waypoints: points,
             router: L.Routing.mapzen('valhalla-3F5smze',
                 {
                     costing: 'bicycle',
@@ -207,6 +230,18 @@ var myMap = (function ($) {
             summaryTemplate: '<div class="start">{name}</div><div class="info {costing}">{distance}, {time}</div>',
             routeWhileDragging: false
         }).addTo(map);
+
+        var data = {
+            locations: [{ lat: points[0].lat, lon: points[0].lng }, { lat: points[1].lat, lon: points[1].lng }],
+            //locations:points,
+            costing: "bicycle"
+           // locations: points
+        }
+        MapData.jsonMapzen(data,getRoute);
+
+        function getRoute(route) {
+            var r = route;
+        }
     }
    
     return myMap
