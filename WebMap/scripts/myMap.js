@@ -1,27 +1,7 @@
 ﻿/// <reference path="~\openlayers\OpenLayers.js" />
 
 
-//var ENV = (function() {
-    
-//    var localStorage = window.localStorage;
 
-//    return {
-//        settings: {
-//            /**
-//            * state-mgmt
-//            */
-//            enabled:    localStorage.getItem('enabled')     || 'true',
-//            aggressive: localStorage.getItem('aggressive')  || 'false'
-//        },
-//        toggle: function(key) {
-//            var value       = localStorage.getItem(key)
-//            newValue    = ((new String(value)) == 'true') ? 'false' : 'true';
-
-//            localStorage.setItem(key, newValue);
-//            return newValue;
-//        }
-//    }
-//})()
 
 var MapData = (function ($) {
     "use strict";
@@ -79,6 +59,8 @@ var MapData = (function ($) {
             });
 
     };
+
+
     return MapData;
 
 
@@ -95,10 +77,12 @@ var myMap = (function ($) {
         path,
         aggressiveEnabled,
         locations = [],
-            route,
-            iconCentre1,
-                iconCentre2,
-                points=[];
+        route,
+        iconCentre1,
+        messageBox,
+        wayPoints = [],
+        routePoints = [],
+            bikeType;
 
     // Create additional Control placeholders
     function addControlPlaceholders(map) {
@@ -125,14 +109,18 @@ var myMap = (function ($) {
 
         // first point will be the latest one recorded, use this to centre the map
         location = locs[0];
-        map = L.map('map').setView([location.latitude, location.longitude], 14);
+        var options = { timeout: 5000, position: 'bottomleft' }
+        map = L.map('map', { messagebox: true }).setView([location.latitude, location.longitude], 14);
 
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 18
+            
         }).addTo(map);
 
         addControlPlaceholders(map);
+
+        L.control.mousePosition().addTo(map);
 
         iconCentre1 = L.control({ position: 'centerleft' });
         iconCentre1.onAdd = function (map) {
@@ -144,10 +132,15 @@ var myMap = (function ($) {
         }
         iconCentre1.addTo(map);
 
-        L.easyButton('<span >&rarr;</span>', createRoute).addTo(map);
-        L.easyButton('<span >&check;</span>', addPoint).addTo(map);
-        L.easyButton('<span >&cross;</span>', deletePoint).addTo(map);
-
+        L.easyButton('<span class="bigfont">&rarr;</span>', createRoute).addTo(map);
+        L.easyButton('<span class="bigfont">&check;</span>', addPoint).addTo(map);
+        L.easyButton('<span class="bigfont">&cross;</span>', deletePoint).addTo(map);
+        L.easyButton('<span class="smallfont">&odot;&odot;</span>', changeBike).addTo(map);
+        bikeType = "Hybrid";
+        map.messagebox.options.timeout = 5000;
+        map.messagebox.setPosition('topleft');
+        map.messagebox.show(bikeType);
+        
         var index, count = locs.length;
         var now = new Date();
         var reggie = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/;
@@ -190,27 +183,90 @@ var myMap = (function ($) {
         var centre = map.getCenter();
 
         if (route == undefined) {
-            points.push(L.latLng(location.latitude, location.longitude));
-            points.push(L.latLng(centre.lat, centre.lng));
+            wayPoints.push(L.latLng(location.latitude, location.longitude));
+            wayPoints.push(L.latLng(centre.lat, centre.lng));
             createRoute();
             return;
         }
-        points.push(L.latLng(centre.lat, centre.lng));
+        wayPoints.push(L.latLng(centre.lat, centre.lng));
         createRoute();
         
     }
     function deletePoint()
     {
-        if (points.length < 2) {
+        if (wayPoints.length < 2) {
             alert("No waypoints to delete!")
             return;
         }
-        points.pop();
+        wayPoints.pop();
         createRoute();
     }
+    function changeBike()
+    {
+        switch (bikeType) {
+            case 'Hybrid': bikeType = 'Cross'; break;
+            case 'Cross': bikeType = 'Mountain'; break;
+            case 'Mountain': bikeType = 'Road'; break;
+            default: bikeType = 'Hybrid'; break;
+        }
+        map.messagebox.show(bikeType);
+        createRoute();
+    }
+
+    // This is adapted from the implementation in Project-OSRM
+    // https://github.com/DennisOSRM/Project-OSRM-Web/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
+    function polyLineDecode(str, precision) {
+        var index = 0,
+            lat = 0,
+            lng = 0,
+            coordinates = [],
+            shift = 0,
+            result = 0,
+            byte = null,
+            latitude_change,
+            longitude_change,
+            factor = Math.pow(10, precision || 6);
+
+        // Coordinates have variable length when encoded, so just keep
+        // track of whether we've hit the end of the string. In each
+        // loop iteration, a single coordinate is decoded.
+        while (index < str.length) {
+
+            // Reset shift, result, and byte
+            byte = null;
+            shift = 0;
+            result = 0;
+
+            do {
+                byte = str.charCodeAt(index++) - 63;
+                result |= (byte & 0x1f) << shift;
+                shift += 5;
+            } while (byte >= 0x20);
+
+            latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+            shift = result = 0;
+
+            do {
+                byte = str.charCodeAt(index++) - 63;
+                result |= (byte & 0x1f) << shift;
+                shift += 5;
+            } while (byte >= 0x20);
+
+            longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+            lat += latitude_change;
+            lng += longitude_change;
+
+            coordinates.push([lat / factor, lng / factor]);
+        }
+
+        return coordinates;
+    };
+
     function createRoute()
     {
-        if (points.length < 2)
+        if (wayPoints.length < 2)
         {
             alert("No waypoints added!")
             return;
@@ -219,11 +275,11 @@ var myMap = (function ($) {
         if (route != undefined)
             route.removeFrom(map);
         route = L.Routing.control({
-            waypoints: points,
+            waypoints: wayPoints,
             router: L.Routing.mapzen('valhalla-3F5smze',
                 {
                     costing: 'bicycle',
-                    costing_options: { bicycle: { bicycle_type: 'Mountain' } }
+                    costing_options: { bicycle: { bicycle_type: bikeType } }
                 }
                 ),
             formatter: new L.Routing.mapzenFormatter(),
@@ -232,17 +288,48 @@ var myMap = (function ($) {
         }).addTo(map);
 
         var data = {
-            locations: [{ lat: points[0].lat, lon: points[0].lng }, { lat: points[1].lat, lon: points[1].lng }],
+            locations: [{ lat: wayPoints[0].lat, lon: wayPoints[0].lng }, { lat: wayPoints[1].lat, lon: wayPoints[1].lng }],
             //locations:points,
             costing: "bicycle"
            // locations: points
         }
         MapData.jsonMapzen(data,getRoute);
 
-        function getRoute(route) {
-            var r = route;
+        function getRoute(response) {
+            // get the written / spoken instructions
+            for (var i = 0; i < response.trip.legs.length; i++) {
+                for (var j = 0; j < response.trip.legs[i].maneuvers.length; j++) {
+                    var maneuver = response.trip.legs[i].maneuvers[j];
+                    var instruction = maneuver.verbal_pre_transition_instruction;
+                    responsiveVoice.speak(instruction);
+                    break;
+                }
+            }
+            // get the list of locations passed through
+            routePoints = [];
+            for (var i = 0; i < response.trip.legs.length; i++) {
+                for (var j = 0; j < response.trip.legs[i].maneuvers.length; j++) {
+                    var pline = response.trip.legs[i].shape;
+                    var locations = polyLineDecode(pline, 6);
+                    
+                    for (var loc = 0; loc < locations.length; loc++) {
+                        routePoints.push(locations[loc]);
+                    }
+
+                }
+            }
         }
     }
-   
+    myMap.checkInstructions = function (lat, lon) {
+        for (var loc = 0; loc < routePoints.length; loc++) {
+            var point = routePoints[loc];
+            // witjin 20 metres (approx)?
+            if (Math.abs(point[0] - lat) < 0.0002) {
+                if (Math.abs(point[1] - lon) < 0.0002) {
+                    var hit = true;
+                }
+            }
+        }
+    }
     return myMap
 })(jQuery)
