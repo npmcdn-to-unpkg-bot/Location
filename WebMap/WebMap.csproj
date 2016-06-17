@@ -65,11 +65,13 @@
     <Content Include="config.xml">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="css\dialog.css" />
     <Content Include="css\easyButton.css" />
     <Content Include="css\index.css" />
     <Content Include="css\leaflet.css" />
     <Content Include="css\my.css" />
     <Content Include="images\crosshair.png" />
+    <Content Include="scripts\dialog.js" />
     <Content Include="scripts\images\layers-2x.png" />
     <Content Include="scripts\images\layers.png" />
     <Content Include="scripts\images\LockScreenLogo.scale-200.png" />

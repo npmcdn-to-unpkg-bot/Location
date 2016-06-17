@@ -28,7 +28,12 @@
         var value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
         var prefixAndValue = this.options.prefix + ' ' + value;
         this._container.innerHTML = prefixAndValue;
-        myMap.checkInstructions(lat, lng);
+        if (myMap.checkInstructions(lat, lng)) {
+            this._container.innerHTML = "on track!";
+        }
+        else {
+            this._container.innerHTML = prefixAndValue;
+        }
     }
 
 });

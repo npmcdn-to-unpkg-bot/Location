@@ -70,6 +70,10 @@ var myMap = (function ($) {
     "use strict";
 
     aggressiveEnabled: false;
+    // distance to check if on track or not (approx 20 m)
+    var near = 0.0002;
+    // distance to check if too far from track (appox 500m)
+    var far = 0.05;
 
     var myMap = {},
         map,
@@ -80,9 +84,16 @@ var myMap = (function ($) {
         route,
         iconCentre1,
         messageBox,
+        legs=[],
         wayPoints = [],
         routePoints = [],
-            bikeType;
+        followedPoints = [],
+        nearestPoint = null,
+        nextPoint = null,
+        onTrack = false,
+        lastLine1, lastLine2, lastDem,
+        bikeType,
+        dialog,dialogContents;
 
     // Create additional Control placeholders
     function addControlPlaceholders(map) {
@@ -118,29 +129,7 @@ var myMap = (function ($) {
             
         }).addTo(map);
 
-        addControlPlaceholders(map);
 
-        L.control.mousePosition().addTo(map);
-
-        iconCentre1 = L.control({ position: 'centerleft' });
-        iconCentre1.onAdd = function (map) {
-            this._div = L.DomUtil.create('div', 'myControl');
-            var img_log = "<div><img src=\"images/crosshair.png\"></img></div>";
-            this._div.innerHTML = img_log;
-            return this._div;
-
-        }
-        iconCentre1.addTo(map);
-
-        L.easyButton('<span class="bigfont">&rarr;</span>', createRoute).addTo(map);
-        L.easyButton('<span class="bigfont">&check;</span>', addPoint).addTo(map);
-        L.easyButton('<span class="bigfont">&cross;</span>', deletePoint).addTo(map);
-        L.easyButton('<span class="smallfont">&odot;&odot;</span>', changeBike).addTo(map);
-        bikeType = "Hybrid";
-        map.messagebox.options.timeout = 5000;
-        map.messagebox.setPosition('topleft');
-        map.messagebox.show(bikeType);
-        
         var index, count = locs.length;
         var now = new Date();
         var reggie = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/;
@@ -174,10 +163,52 @@ var myMap = (function ($) {
                 circle.bindPopup(loc.recorded_at);
             }
         }
-
+        AddControls();
 
 
     }, true, null);
+
+    function AddControls() {
+
+        addControlPlaceholders(map);
+
+        L.control.mousePosition().addTo(map);
+
+        // a cross-hair for choosing points
+        iconCentre1 = L.control({ position: 'centerleft' });
+        iconCentre1.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'myControl');
+            var img_log = "<div><img src=\"images/crosshair.png\"></img></div>";
+            this._div.innerHTML = img_log;
+            return this._div;
+
+        }
+        iconCentre1.addTo(map);
+
+        dialogContents = [
+         "<p>Quilkin cycle router: Options</p>",
+         "<button class='btn btn-primary' onclick='myMap.changeBike()'>Bike Type: Hybrid</button><br/><br/>",
+          "<button class='btn btn-primary' onclick='myMap.changeHills()'>Hill use (0-9): 5</button><br/><br/>",
+          "<button class='btn btn-primary' onclick='myMap.changeMainRoads()'>Main Road use (0-9): 2</button><br/><br/>",
+         //"<button class='btn btn-danger' onclick='dialog.freeze()'>dialog.freeze()</button>&nbsp;&nbsp;",
+         //"<button class='btn btn-success' onclick='dialog.unfreeze()'>dialog.unfreeze()</button><br/><br/>",
+        ].join('');
+
+        dialog = L.control.dialog()
+                  .setContent(dialogContents)
+                  .addTo(map);
+
+        L.easyButton('<span class="bigfont">&rarr;</span>', createRoute).addTo(map);
+        L.easyButton('<span class="bigfont">&check;</span>', addPoint).addTo(map);
+        L.easyButton('<span class="bigfont">&cross;</span>', deletePoint).addTo(map);
+        L.easyButton('<span class="bigfont">&odot;</span>', openDialog).addTo(map);
+        bikeType = "Hybrid";
+        //map.messagebox.options.timeout = 5000;
+        //map.messagebox.setPosition('topleft');
+        //map.messagebox.show(bikeType);
+
+
+    }
 
     function addPoint() {
         var centre = map.getCenter();
@@ -201,20 +232,30 @@ var myMap = (function ($) {
         wayPoints.pop();
         createRoute();
     }
-    function changeBike()
+    function openDialog() {
+        dialog.open();
+    }
+    myMap.changeBike = function()
     {
         switch (bikeType) {
-            case 'Hybrid': bikeType = 'Cross'; break;
-            case 'Cross': bikeType = 'Mountain'; break;
-            case 'Mountain': bikeType = 'Road'; break;
-            default: bikeType = 'Hybrid'; break;
+            case 'Hybrid': bikeType = 'Cross'; dialogContents = dialogContents.replace("Hybrid", "Cross"); break;
+            case 'Cross': bikeType = 'Mountain'; dialogContents = dialogContents.replace("Cross", "Mountain"); break;
+            case 'Mountain': bikeType = 'Road'; dialogContents = dialogContents.replace("Mountain", "Road"); break;
+            case "Road": bikeType = 'Hybrid'; dialogContents = dialogContents.replace("Road", "Hybrid"); break;
         }
-        map.messagebox.show(bikeType);
-        createRoute();
+        dialog.setContent(dialogContents);
+        dialog.update();
+               //map.messagebox.show(bikeType);
+        if (wayPoints.length >= 2)
+            createRoute();
     }
-
-    // This is adapted from the implementation in Project-OSRM
-    // https://github.com/DennisOSRM/Project-OSRM-Web/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
+    myMap.changeMainRoads = function () {
+        //ToDo
+    }
+    myMap.changeHills = function () {
+        //ToDo
+    }
+    // Code from Mapzen site
     function polyLineDecode(str, precision) {
         var index = 0,
             lat = 0,
@@ -294,42 +335,102 @@ var myMap = (function ($) {
            // locations: points
         }
         MapData.jsonMapzen(data,getRoute);
+       
+    }
 
-        function getRoute(response) {
-            // get the written / spoken instructions
-            for (var i = 0; i < response.trip.legs.length; i++) {
-                for (var j = 0; j < response.trip.legs[i].maneuvers.length; j++) {
-                    var maneuver = response.trip.legs[i].maneuvers[j];
-                    var instruction = maneuver.verbal_pre_transition_instruction;
-                    responsiveVoice.speak(instruction);
-                    break;
-                }
+    function getRoute(response) {
+        var maneuvers = [];
+
+        legs = response.trip.legs;
+        // get the written / spoken instructions
+        for (var i = 0; i < response.trip.legs.length; i++) {
+            for (var j = 0; j < response.trip.legs[i].maneuvers.length; j++) {
+                var maneuver = response.trip.legs[i].maneuvers[j];
+                var instruction = maneuver.verbal_pre_transition_instruction;
+                var shapeIndex = maneuver.begin_shape_index;
+                maneuvers.push([i, shapeIndex, instruction ]);
+                //responsiveVoice.speak(instruction);
+                //break;
             }
-            // get the list of locations passed through
-            routePoints = [];
-            for (var i = 0; i < response.trip.legs.length; i++) {
-                for (var j = 0; j < response.trip.legs[i].maneuvers.length; j++) {
-                    var pline = response.trip.legs[i].shape;
-                    var locations = polyLineDecode(pline, 6);
-                    
-                    for (var loc = 0; loc < locations.length; loc++) {
-                        routePoints.push(locations[loc]);
-                    }
+        }
+        // get the list of locations passed through
+        routePoints = [];
+        followedPoints = [];
+        nearestPoint = null;
+        onTrack = false;
+        for (var i = 0; i < legs.length; i++) {
+            //for (var j = 0; j < legs[i].maneuvers.length; j++) {
+            var pline = legs[i].shape;
+            var locations = polyLineDecode(pline, 6);
 
-                }
+            for (var loc = 0; loc < locations.length; loc++) {
+                // save points passed through, and the legs/maneuvers they are stored in
+                var p1 = locations[loc][0], p2 = locations[loc][1];
+                routePoints.push([p1, p2, i, loc]);
+                
             }
         }
     }
+    function pointToLine(point0,line1,line2) {
+        // find min distance from point0 to line defined by points line1 and line2
+        var numer,dem;
+        var x1 = line1[0], x2 = line2[0], x0 = point0[0];
+        var y1 = line1[1], y2 = line2[1], y0 = point0[1];
+        
+        if (line1===lastLine1 && line2 === lastLine2) {
+            // same line as we checked before, can save time by not recalculating sqaure root on demoninator
+            dem = lastDem;
+        }
+        else {
+            dem = Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+            lastLine1 = line1;
+            lastLine2 = line2;
+            lastDem = dem;
+        }
+        numer =  Math.abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1);
+        return numer / dem;
+
+    }
     myMap.checkInstructions = function (lat, lon) {
-        for (var loc = 0; loc < routePoints.length; loc++) {
-            var point = routePoints[loc];
-            // witjin 20 metres (approx)?
-            if (Math.abs(point[0] - lat) < 0.0002) {
-                if (Math.abs(point[1] - lon) < 0.0002) {
-                    var hit = true;
+        var thisPoint = [lat, lon];
+        followedPoints.push(thisPoint);
+        if (nearestPoint === null && onTrack === false) {
+            // Nowhere near?. Check point against all points in the route
+            for (var loc = 0; loc < routePoints.length; loc++) {
+                var point = routePoints[loc];
+                // within 20 metres (approx)?
+                if (Math.abs(point[0] - lat) < near) {
+                    if (Math.abs(point[1] - lon) < near) {
+                        nearestPoint = point;
+                        if (loc < routePoints.length - 1)
+                            nextPoint = routePoints[loc + 1];
+                        else
+                            nextPoint = nearestPoint;
+                        onTrack = true;
+                        break;
+                    }
                 }
             }
         }
+        else {
+            // we are (or were) on track, see how far we are from the nearest route segment (line)
+            
+            var distance = pointToLine(thisPoint, nearestPoint, nextPoint);
+            onTrack = (distance < near);
+
+            if (distance >= far) {
+                // too far off track, need to start looking for track again
+                nearestPoint = null;
+            }
+        }
+        if (onTrack) {
+            // find the appropriate instruction to provide
+            var i = nearestPoint[2], j = nearestPoint[3];
+            var maneuver = legs[i].maneuvers[j];
+            var instruction = maneuver.verbal_pre_transition_instruction;
+            responsiveVoice.speak(instruction);
+        }
+        return (onTrack);
     }
     return myMap
 })(jQuery)
