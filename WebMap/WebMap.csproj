@@ -180,6 +180,7 @@
     <Content Include="scripts\mousePos.js" />
     <Content Include="scripts\myMap.js" />
     <Content Include="scripts\platformOverrides.js" />
+    <Content Include="scripts\voice.js" />
     <Content Include="Service1.svc" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>

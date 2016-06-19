@@ -1,6 +1,6 @@
 ﻿L.Control.Dialog = L.Control.extend({
     options: {
-        size: [200, 200],
+        size:  [250, 200],
         minSize: [100, 100],
         maxSize: [350, 350],
         anchor: [250, 250],

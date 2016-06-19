@@ -74,6 +74,9 @@ var myMap = (function ($) {
     var near = 0.0002;
     // distance to check if too far from track (appox 500m)
     var far = 0.05;
+    // message when off track
+    var offTrack1 = "Attention! You are "
+    var offTrack2 = " metres off course. Correct course is to the "
 
     var myMap = {},
         map,
@@ -89,11 +92,13 @@ var myMap = (function ($) {
         routePoints = [],
         followedPoints = [],
         nearestPoint = null,
-        //nextPoint = null,
-        //subseqPoint = null,
+        lastNearestPoint = null,
         onTrack = false,
         lastLine1, lastLine2, lastDem,
         bikeType,
+        useRoads = 2,
+        useHills = 2,
+        nearest,nextNearest,
         dialog,dialogContents;
 
     // Create additional Control placeholders
@@ -189,8 +194,8 @@ var myMap = (function ($) {
         dialogContents = [
          "<p>Quilkin cycle router: Options</p>",
          "<button class='btn btn-primary' onclick='myMap.changeBike()'>Bike Type: Hybrid</button><br/><br/>",
-          "<button class='btn btn-primary' onclick='myMap.changeHills()'>Hill use (0-9): 5</button><br/><br/>",
-          "<button class='btn btn-primary' onclick='myMap.changeMainRoads()'>Main Road use (0-9): 2</button><br/><br/>",
+          "<button class='btn btn-primary' onclick='myMap.changeHills()'>Use of hills (0-9): 2</button><br/><br/>",
+          "<button class='btn btn-primary' onclick='myMap.changeMainRoads()'>Use of main roads (0-9): 2</button><br/><br/>",
          //"<button class='btn btn-danger' onclick='dialog.freeze()'>dialog.freeze()</button>&nbsp;&nbsp;",
          //"<button class='btn btn-success' onclick='dialog.unfreeze()'>dialog.unfreeze()</button><br/><br/>",
         ].join('');
@@ -246,15 +251,24 @@ var myMap = (function ($) {
         }
         dialog.setContent(dialogContents);
         dialog.update();
-               //map.messagebox.show(bikeType);
         if (wayPoints.length >= 2)
             createRoute();
     }
     myMap.changeMainRoads = function () {
-        //ToDo
+        useRoads = (useRoads + 1) % 10;
+        dialogContents = dialogContents.replace(/roads \(0-9\): [0-9]/, "roads (0-9): " + useRoads);
+        dialog.setContent(dialogContents);
+        dialog.update();
+        if (wayPoints.length >= 2)
+            createRoute();
     }
     myMap.changeHills = function () {
-        //ToDo
+        useHills = (useHills + 1) % 10;
+        dialogContents = dialogContents.replace(/hills \(0-9\): [0-9]/, "hills (0-9): " + useHills);
+        dialog.setContent(dialogContents);
+        dialog.update();
+        if (wayPoints.length >= 2)
+            createRoute();
     }
     // Code from Mapzen site
     function polyLineDecode(str, precision) {
@@ -314,13 +328,20 @@ var myMap = (function ($) {
             return;
         }
         if (route != undefined)
-            route.removeFrom(map);
+            //route.removeFrom(map);
+            map.removeLayer(route);
 
         var data = {
             locations: [{ lat: wayPoints[0].lat, lon: wayPoints[0].lng }, { lat: wayPoints[1].lat, lon: wayPoints[1].lng }],
             //locations: wayPoints,
             costing: "bicycle",
-            costing_options: { bicycle: { bicycle_type: bikeType } }
+            costing_options: {
+                bicycle: {
+                    bicycle_type: bikeType,
+                    use_roads: useRoads / 10,
+                    use_hills: useHills / 10
+                }
+            }
         }
         MapData.jsonMapzen(data,getRoute);
        
@@ -395,8 +416,44 @@ var myMap = (function ($) {
         return numer / dem;
 
     }
+    function bearingFromCoordinate(point0, point1) {
+
+        var x1 = point0[0], x2 = point1[0];
+        var y1 = point0[1], y2 = point1[1];
+
+        var dLon = (y2 - y1);
+
+        var y = Math.sin(dLon) * Math.cos(x2);
+        var x = Math.cos(x1) * Math.sin(x2) - Math.sin(x1)
+                * Math.cos(x2) * Math.cos(dLon);
+
+        var brng = Math.atan2(y, x);
+
+        brng = brng * 57.2958;
+        brng = (brng + 360) % 360;
+
+        if (brng < 22.5)
+            return 'North';
+        if (brng < 67.5)
+            return 'North East';
+        if (brng < 112.5)
+            return 'East';
+        if (brng < 157.5)
+            return 'South East';
+        if (brng < 202.5)
+            return 'South';
+        if (brng < 247.5)
+            return 'South West';
+        if (brng < 292.5)
+            return 'West';
+        if (brng < 337.5)
+            return 'North West';
+        return 'North';
+    }
+
     myMap.checkInstructions = function (lat, lon) {
         var thisPoint = [lat, lon];
+
         followedPoints.push(thisPoint);
         if (nearestPoint === null && onTrack === false) {
             // Nowhere near?. Check point against all points in the route
@@ -414,9 +471,9 @@ var myMap = (function ($) {
         }
         else {
             // we are (or were) on track, see how far we are from the nearest route segment (line)
-
-            var nearest = pointToLine(thisPoint, routePoints[nearestPoint], routePoints[nearestPoint + 1]);
-            var nextNearest = pointToLine(thisPoint, routePoints[nearestPoint + 1], routePoints[nearestPoint + 2]);
+            lastNearestPoint = nearestPoint;
+            nearest = pointToLine(thisPoint, routePoints[nearestPoint], routePoints[nearestPoint + 1]);
+            nextNearest = pointToLine(thisPoint, routePoints[nearestPoint + 1], routePoints[nearestPoint + 2]);
             onTrack = (nearest < near);
             if (nextNearest < near) {
                 // we have moved on nearer to the next point
@@ -425,15 +482,22 @@ var myMap = (function ($) {
             }
             if (!onTrack) {
                 // need to start looking from scratch again
+                
                 nearestPoint = null;
             }
         }
+        
         if (onTrack) {
             map.messagebox.show(nearestPoint);
             // find the appropriate instruction to provide
             var instruction = routePoints[nearestPoint][2];
             if (instruction.length > 2)
                 responsiveVoice.speak(instruction);
+        }
+        else if (lastNearestPoint) {
+            var nearestInt = Math.floor(nearest*10000) * 10; // convert offset to multiples of ten metres
+            var bearing = bearingFromCoordinate(thisPoint, routePoints[lastNearestPoint]);
+            responsiveVoice.speak(offTrack1 + nearestInt + offTrack2 + bearing);
         }
         return (onTrack);
     }
