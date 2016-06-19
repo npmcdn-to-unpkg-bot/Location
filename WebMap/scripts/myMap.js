@@ -87,6 +87,7 @@ var myMap = (function ($) {
         route,
         iconCentre1,
         messageBox,
+        routes = [],
         legs = [],
         wayPoints = [],
         routePoints = [],
@@ -196,15 +197,13 @@ var myMap = (function ($) {
          "<button class='btn btn-primary' onclick='myMap.changeBike()'>Bike Type: Hybrid</button><br/><br/>",
           "<button class='btn btn-primary' onclick='myMap.changeHills()'>Use of hills (0-9): 2</button><br/><br/>",
           "<button class='btn btn-primary' onclick='myMap.changeMainRoads()'>Use of main roads (0-9): 2</button><br/><br/>",
-         //"<button class='btn btn-danger' onclick='dialog.freeze()'>dialog.freeze()</button>&nbsp;&nbsp;",
-         //"<button class='btn btn-success' onclick='dialog.unfreeze()'>dialog.unfreeze()</button><br/><br/>",
         ].join('');
 
         dialog = L.control.dialog()
                   .setContent(dialogContents)
                   .addTo(map);
 
-        L.easyButton('<span class="bigfont">&rarr;</span>', createRoute).addTo(map);
+        //L.easyButton('<span class="bigfont">&rarr;</span>', createRoute).addTo(map);
         L.easyButton('<span class="bigfont">&check;</span>', addPoint).addTo(map);
         L.easyButton('<span class="bigfont">&cross;</span>', deletePoint).addTo(map);
         L.easyButton('<span class="bigfont">&odot;</span>', openDialog).addTo(map);
@@ -217,17 +216,20 @@ var myMap = (function ($) {
     }
 
     function addPoint() {
-        var centre = map.getCenter();
 
-        if (route == undefined) {
-            wayPoints.push(L.latLng(location.latitude, location.longitude));
-            wayPoints.push(L.latLng(centre.lat, centre.lng));
-            createRoute();
-            return;
-        }
+        var centre = map.getCenter();
         wayPoints.push(L.latLng(centre.lat, centre.lng));
+        if (route == undefined) {
+             if (wayPoints.length === 1) {
+                // this is first (starting) point. Need moe points!
+                return;
+            }
+        }
         createRoute();
-        
+        //var layercount = 0;
+        //map.eachLayer(function () {
+        //    alert("Layer " + (++layercount));
+        //})
     }
     function deletePoint()
     {
@@ -327,13 +329,20 @@ var myMap = (function ($) {
             alert("No waypoints added!")
             return;
         }
-        if (route != undefined)
-            //route.removeFrom(map);
+        //if (route != undefined)
+        //    map.removeLayer(route);
+        while (routes.length > 0)
+        {
+            var route = routes.pop();
             map.removeLayer(route);
-
+        }
+        var p, points=[];
+        for (p = 0; p < wayPoints.length; p++) {
+            points.push({ lat: wayPoints[p].lat, lon: wayPoints[p].lng })
+        }
         var data = {
-            locations: [{ lat: wayPoints[0].lat, lon: wayPoints[0].lng }, { lat: wayPoints[1].lat, lon: wayPoints[1].lng }],
-            //locations: wayPoints,
+            //locations: [{ lat: wayPoints[0].lat, lon: wayPoints[0].lng }, { lat: wayPoints[1].lat, lon: wayPoints[1].lng }],
+            locations: points,
             costing: "bicycle",
             costing_options: {
                 bicycle: {
@@ -374,13 +383,17 @@ var myMap = (function ($) {
             var pline = leg.shape;
             var locations = polyLineDecode(pline, 6);
 
+            var colour = 'red';
+            if (wayPoints.length > 2) colour = 'blue';
+            if (wayPoints.length > 3) colour = 'green';
             route = new L.Polyline(locations, {
-                color: 'red',
+                color: colour,
                 opacity: 1,
                 weight: 2,
                 clickable: false
             }).addTo(map);
-
+            //var id = L.stamp(route);
+            routes.push(route);
             for (var loc = 0; loc < locations.length; loc++) {
                 // save points passed through, and store any instruction for each point 
                 var p1 = locations[loc][0], p2 = locations[loc][1];
@@ -416,19 +429,34 @@ var myMap = (function ($) {
         return numer / dem;
 
     }
+    function distanceBetweenCoordinates(point0, point1)
+    {
+        var x1 = point0[0], x2 = point1[0];
+        var y1 = point0[1], y2 = point1[1];
+        var R = 6371e3; // metres
+        var φ1 = x1 / 57.2958;
+        var φ2 = x2 / 57.2958;
+        var Δφ = (x2 - x1) / 57.2958;
+        var Δλ = (y2 - y1) / 57.2958;
+
+        var a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        var d = R * c;
+        return d;
+
+    }
     function bearingFromCoordinate(point0, point1) {
 
         var x1 = point0[0], x2 = point1[0];
         var y1 = point0[1], y2 = point1[1];
-
         var dLon = (y2 - y1);
-
         var y = Math.sin(dLon) * Math.cos(x2);
         var x = Math.cos(x1) * Math.sin(x2) - Math.sin(x1)
                 * Math.cos(x2) * Math.cos(dLon);
-
         var brng = Math.atan2(y, x);
-
         brng = brng * 57.2958;
         brng = (brng + 360) % 360;
 
@@ -495,9 +523,13 @@ var myMap = (function ($) {
                 responsiveVoice.speak(instruction);
         }
         else if (lastNearestPoint) {
-            var nearestInt = Math.floor(nearest*10000) * 10; // convert offset to multiples of ten metres
+            if (lastNearestPoint >= routePoints.length) {
+                lastNearestPoint = routePoints.length - 1;
+            }
+             // convert offset to multiples of ten metres
+            var dist = Math.floor(distanceBetweenCoordinates(thisPoint, routePoints[lastNearestPoint])/10)*10;
             var bearing = bearingFromCoordinate(thisPoint, routePoints[lastNearestPoint]);
-            responsiveVoice.speak(offTrack1 + nearestInt + offTrack2 + bearing);
+            responsiveVoice.speak(offTrack1 + dist + offTrack2 + bearing);
         }
         return (onTrack);
     }

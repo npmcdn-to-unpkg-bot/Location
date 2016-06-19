@@ -175,6 +175,7 @@
     <Content Include="scripts\easyButton.js" />
     <Content Include="scripts\index.js" />
     <Content Include="scripts\jquery-1.11.3.min.js" />
+    <Content Include="scripts\leaflet-src.js" />
     <Content Include="scripts\lrm-mapzen.js" />
     <Content Include="scripts\messageBox.js" />
     <Content Include="scripts\mousePos.js" />
