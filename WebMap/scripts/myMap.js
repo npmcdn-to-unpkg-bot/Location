@@ -84,10 +84,11 @@ var myMap = (function ($) {
         path,
         aggressiveEnabled,
         locations = [],
-        route,
         iconCentre1,
         messageBox,
+        routeLine = null,
         routes = [],
+        markers=[],
         legs = [],
         wayPoints = [],
         routePoints = [],
@@ -101,6 +102,44 @@ var myMap = (function ($) {
         useHills = 2,
         nearest,nextNearest,
         dialog,dialogContents;
+
+
+    var redIcon = new L.Icon({
+        iconUrl: 'scripts/images/marker-icon-red.png',
+        shadowUrl: 'scripts/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    var greenIcon = new L.Icon({
+        iconUrl: 'scripts/images/marker-icon-green.png',
+        shadowUrl: 'scripts/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    var orangeIcon = new L.Icon({
+        iconUrl: 'scripts/images/marker-icon-orange.png',
+        shadowUrl: 'scripts/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    var yellowIcon = new L.Icon({
+        iconUrl: 'scripts/images/marker-icon-yellow.png',
+        shadowUrl: 'scripts/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
 
     // Create additional Control placeholders
     function addControlPlaceholders(map) {
@@ -219,17 +258,19 @@ var myMap = (function ($) {
 
         var centre = map.getCenter();
         wayPoints.push(L.latLng(centre.lat, centre.lng));
-        if (route == undefined) {
-             if (wayPoints.length === 1) {
-                // this is first (starting) point. Need moe points!
-                return;
-            }
+        //if (route == undefined) {
+        //if (routes.length == 0)
+        var marker = L.marker([centre.lat, centre.lng]).addTo(map);
+        responsiveVoice.speak("Added a point");
+        if (wayPoints.length === 1) {
+            marker = L.marker([centre.lat, centre.lng], { icon: greenIcon }).addTo(map);
+            markers.push(marker);
+            // this is first (starting) point. Need more points!
+            return;
         }
+        
+        markers.push(marker);
         createRoute();
-        //var layercount = 0;
-        //map.eachLayer(function () {
-        //    alert("Layer " + (++layercount));
-        //})
     }
     function deletePoint()
     {
@@ -237,6 +278,8 @@ var myMap = (function ($) {
             alert("No waypoints to delete!")
             return;
         }
+        var marker = markers.pop();
+        map.removeLayer(marker);
         wayPoints.pop();
         createRoute();
     }
@@ -336,6 +379,7 @@ var myMap = (function ($) {
             var route = routes.pop();
             map.removeLayer(route);
         }
+        //var polyline = L.polyline(wayPoints, { color: 'red' }).addTo(map);
         var p, points=[];
         for (p = 0; p < wayPoints.length; p++) {
             points.push({ lat: wayPoints[p].lat, lon: wayPoints[p].lng })
@@ -386,7 +430,7 @@ var myMap = (function ($) {
             var colour = 'red';
             if (wayPoints.length > 2) colour = 'blue';
             if (wayPoints.length > 3) colour = 'green';
-            route = new L.Polyline(locations, {
+            var route = new L.Polyline(locations, {
                 color: colour,
                 opacity: 1,
                 weight: 2,
@@ -477,6 +521,16 @@ var myMap = (function ($) {
         if (brng < 337.5)
             return 'North West';
         return 'North';
+    }
+
+    myMap.planRouteLine = function (lat, lon) {
+        //var thisPoint = [lat, lon];
+        //var centre = map.getCenter();
+        //if (routeLine != null)
+        //{
+        //    map.removeLayer(routeLine);
+        //}
+        //routeLine = L.polyline([thisPoint,centre], { color: 'red' }).addTo(map);
     }
 
     myMap.checkInstructions = function (lat, lon) {
